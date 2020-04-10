@@ -1,6 +1,13 @@
 # Labyrinthe-Astar
 
-ugly implementation of A* pathfinding algorythm
+Implementation of A* pathfinding algorythm (own interpretation)
+
+It's in fact resolution of a small exercise (described below)
+It permit actually to display what algorythm do in real time
+
+
+
+
 
 ## What script do?
 
@@ -12,7 +19,7 @@ ugly implementation of A* pathfinding algorythm
 #............#.......#................#
 #............#.......#......#.........#
 #....C.......#..............#...T.....#    'T' want to reach 'C'
-#............#.......#......#.........#    and then comme back to his initial position
+#............#.......#......#.........#    and then come back to his initial position
 #............#.......#................#
 #....................#................#
 #.....................................#
