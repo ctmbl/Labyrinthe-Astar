@@ -1,8 +1,21 @@
-import sys
-import math
-from itertools import product
+#!/usr/bin/env python3
 
-import ipdb
+"""
+Implementation of A* pathfinding algorythm  for a small game resolution :
+Kirk (represented by a 'T') want to reach the command console ('C'),
+activate the command and come back to his starting point.
+
+this script permit to solve this little game and illustrate how those
+algorythm work. SHOW_... boolean allow user to activate display of
+different numerical treatment that's are performed
+
+for more details :
+    import labyrinthe
+    help(labyrinthe)
+
+"""
+
+from itertools import product
 import time
 
 
@@ -14,7 +27,7 @@ DIRECTION = {'DOWN' : (0, 1),
 SHOW_ASTAR = True
 SHOW_BRUT = True
 SHOW_MOVE = True
-SHOW_FRAMERATE = 60
+SHOW_FRAMERATE = 240
 
 def pathfinding_astar(start, end, carte_item):
     """
@@ -135,9 +148,9 @@ def update_open_dict(parent_node, node, open_dict, close_dict):
 
     # if not analysed
     if node in open_dict.keys():
-        old_cost = open_dict[node]['cost']
+        old_cost = open_dict[node]['cost'] # cost of path trought actual parent position
         if old_cost > new_cost:
-            open_dict[node] = {'cost' : cost, 'parent' : parent_node} # => give it a better parent
+            open_dict[node] = {'cost' : new_cost, 'parent' : parent_node} # => give it a better parent
         return open_dict
 
     # else if unknown node
@@ -314,24 +327,58 @@ def print_map(current_node=(0, 0), close_dict={(0, 0):0}, open_dict={(0, 0):0}):
             open_dict (dict) : nodes to ne analysed
     """
     h, w = len(world.carte), len(world.carte[0])
-    carte = [list(row) for row in world.get_carte()]
+    carte_ = [list(row) for row in world.get_carte()]
 
     for i, j in list(product(range(w),range(h))):
 
         if (i, j) in close_dict.keys():
-            carte[j][i] = '*'
+            carte_[j][i] = '*'
 
         if (i, j) in open_dict.keys():
-            carte[j][i] = 'o'
+            carte_[j][i] = 'o'
 
+    carte_[current_node[1]][current_node[0]] = '0'
+    carte_[kirk.pos[1]][kirk.pos[0]] == 'T'
 
-    carte[current_node[1]][current_node[0]] = '0'
-    carte[kirk.pos[1]][kirk.pos[0]] == 'T'
-
-    for row in carte:
+    print('\n\n')
+    for row in carte_:
         print(''.join(row))
 
     time.sleep(1/SHOW_FRAMERATE)
+
+
+def print_msg(msg, position='player'):
+    """
+    Display a message box at player position or in screen center,
+    replace character of the map by those of text message
+
+        args:
+            msg (list of str) : the message to Display
+            position (str) : name of desired placment ('player' or 'center'
+
+    """
+
+    h, w = len(world.carte), len(world.carte[0])
+    carte_ = [list(row) for row in world.get_carte()]
+
+    msg_h = len(msg)
+    msg_w = len(msg[0])
+    msg_dy = len(msg)
+    msg_dx = 2
+
+    if position == 'player':
+        kx, ky = kirk.pos
+    elif position == 'center':
+        kx, ky = int(w/2-msg_w/2), int(h/2+msg_h/2)
+
+    for i, j in list(product(range(msg_w),range(msg_h))):
+        carte_[j+ky-msg_dy][i+kx-msg_dx] = msg[j][i]
+
+    print('\n\n')
+    for row in carte_:
+        print(''.join(row))
+
+    input('')
 
 
 def wrap_carte(carte):
@@ -354,7 +401,7 @@ def wrap_carte(carte):
 #################################################################################
 
 
-from world_map import Carte, Kirk, carte
+from world_map import Carte, Kirk, carte, find_msg, cant_msg, get_msg, end_msg
 
 #r, c, a = 10, 30, 200
 
@@ -391,44 +438,36 @@ if __name__ == '__main__':
         start = (kr, kc)
 
         path = pathfinding_brut(start, carte_item, '?')
+        path = path[-1:1:-1]
+        move(start, path)
 
-        for j in range(kc-2, kc+3):
-            for i in range(kr-2, kr+3):
-                if 0 < i < len(carte[0]) and 0 < j < len(carte):
-                    if carte[j][i] == 'C':
-                        print('Nous avons trouvé la console!')
-                        input('')
-                        temp_path = pathfinding_astar((i,j), start,  carte_item)
-                        if temp_path != None:
-                            print('Nous pouvons l\'atteindre!')
-                            input('')
-                            path = temp_path
-                            move(start, path)
-                            print('objectif ateint, nous rentrons au point de rendez-vous')
-                            path = pathfinding_astar((i,j), start_pos,  carte_item)
+        for j, i  in list(product(range(kc-2, kc+3), range(kr-2, kr+3))): # 5*5 grid around kirk
+            if 0 < i < len(carte[0]) and 0 < j < len(carte): # and point not out game window
+                if carte[j][i] == 'C': # in side of view
 
-                            move(start, path[::-1])
-                            print('===================================')
-                            print('===================================')
-                            print('=====*****===*===*===**============')
-                            print('=====*=======**==*===*==*==========')
-                            print('=====***=====*=*=*===*===*=========')
-                            print('=====*=======*==**===*==*==========')
-                            print('=====*****===*===*===***===========')
-                            print('===================================')
-                            print('===================================')
+                    print_msg(find_msg)
+                    path = pathfinding_astar((i,j), start, carte_item) # try to reach it
 
-                            is_fini = True
-                            break
-                        print('mais nous ne pouvons l\'atteindre:=!')
-                        input('')
+                    if not path: # path is empty, there is no way to it, can't reach it
+                        print_msg(cant_msg)
+
+                    if path != None:
+
+                        # go to 'C' character
+                        move(start, path)
+                        print_msg(get_msg)
+
+                        # then come back to start point
+                        path = pathfinding_astar((i,j), start_pos, carte_item)
+                        move(start, path[::-1])
+                        print_msg(end_msg, position='center')
+                        is_fini = True
+                        break
             if is_fini:
                 break
         if is_fini:
             break
 
-        path = path[-1:1:-1]#path[-1:-4:-1]
-        move(start, path)
 
 
     #print("Debug messages...", file=sys.stderr)
