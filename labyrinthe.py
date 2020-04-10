@@ -1,5 +1,6 @@
 import sys
 import math
+from itertools import product
 
 import ipdb
 import time
@@ -10,12 +11,10 @@ DIRECTION = {'DOWN' : (0, 1),
              'RIGHT' : (1, 0),
              'LEFT' : (-1, 0)}
 
-SHOW_ASTAR = False
-SHOW_BRUT = False
+SHOW_ASTAR = True
+SHOW_BRUT = True
 SHOW_MOVE = True
-SHOW_FRAMERATE = 30
-
-
+SHOW_FRAMERATE = 60
 
 def pathfinding_astar(start, end, carte_item):
     """
@@ -240,10 +239,10 @@ def move(start, path):
 
 def pathfinding_brut(start, carte_item, char_researched='?'):
     """
-    Brute force version of A* pathfinding algorythm
-    Search from a starting postion in the map for a given character
+        Brute force version of A* pathfinding algorythm
+        Search from a starting postion in the map for a given character
 
-        args:
+        ARGS:
             start (tuple) : (x, y) starting position
             carte_item (function) : return map character at a given position
             char_researched (str) : infinite loop until it's found
@@ -263,7 +262,7 @@ def pathfinding_brut(start, carte_item, char_researched='?'):
     is_dest_reached = False # true if the char_researched in found
     while not is_dest_reached:
 
-        # enable display of what algorythm do
+        # ENABLE display of what algorythm do
         if SHOW_BRUT:
             print_map(current_node, close_dict, open_dict)
 
@@ -314,18 +313,23 @@ def print_map(current_node=(0, 0), close_dict={(0, 0):0}, open_dict={(0, 0):0}):
             close_dict (dict) : already analysed nodes
             open_dict (dict) : nodes to ne analysed
     """
+    h, w = len(world.carte), len(world.carte[0])
+    carte = [list(row) for row in world.get_carte()]
 
-    for i, j in close_dict.keys():
-        world.carte[j][i] = '*'
+    for i, j in list(product(range(w),range(h))):
 
-    for i, j in open_dict.keys():
-        world.carte[j][i] = 'o'
+        if (i, j) in close_dict.keys():
+            carte[j][i] = '*'
 
-    world.carte[current_node[1]][current_node[0]] = '0'
-    world.carte[world.kirk.pos[1]][world.kirk.pos[0]] == 'T'
+        if (i, j) in open_dict.keys():
+            carte[j][i] = 'o'
 
-    for row in world.get_carte():
-        print(row)
+
+    carte[current_node[1]][current_node[0]] = '0'
+    carte[kirk.pos[1]][kirk.pos[0]] == 'T'
+
+    for row in carte:
+        print(''.join(row))
 
     time.sleep(1/SHOW_FRAMERATE)
 
@@ -402,10 +406,6 @@ if __name__ == '__main__':
                             move(start, path)
                             print('objectif ateint, nous rentrons au point de rendez-vous')
                             path = pathfinding_astar((i,j), start_pos,  carte_item)
-                            for i,j in path:
-                                world.carte[j][i] = ' '
-                            for row in world.carte:
-                                print(''.join(row))
 
                             move(start, path[::-1])
                             print('===================================')
