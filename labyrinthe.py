@@ -13,21 +13,29 @@ for more details :
     import labyrinthe
     help(labyrinthe)
 
+to adjust what you want to be displayed or choose a different map :
+have a look to config.py
+
 """
 
 from itertools import product
 import time
 
+from world_map import Carte, Kirk
+from messages import find_msg, cant_msg, get_msg, end_msg
+
+from config import CARTE, SHOW_ASTAR, SHOW_BRUT, SHOW_MOVE, SHOW_FRAMERATE
+
+
+global ROW
+global COL
+ROW = len(CARTE)
+COL = len(CARTE[0])
 
 DIRECTION = {'DOWN' : (0, 1),
              'UP' : (0, -1),
              'RIGHT' : (1, 0),
              'LEFT' : (-1, 0)}
-
-SHOW_ASTAR = True
-SHOW_BRUT = True
-SHOW_MOVE = True
-SHOW_FRAMERATE = 240
 
 def pathfinding_astar(start, end, carte_item):
     """
@@ -326,10 +334,11 @@ def print_map(current_node=(0, 0), close_dict={(0, 0):0}, open_dict={(0, 0):0}):
             close_dict (dict) : already analysed nodes
             open_dict (dict) : nodes to ne analysed
     """
-    h, w = len(world.carte), len(world.carte[0])
+    #h, w = len(world.carte), len(world.carte[0])
+    #h, w = ROW, COL
     carte_ = [list(row) for row in world.get_carte()]
 
-    for i, j in list(product(range(w),range(h))):
+    for i, j in list(product(range(COL),range(ROW))):
 
         if (i, j) in close_dict.keys():
             carte_[j][i] = '*'
@@ -358,7 +367,7 @@ def print_msg(msg, position='player'):
 
     """
 
-    h, w = len(world.carte), len(world.carte[0])
+    #h, w = len(world.carte), len(world.carte[0])
     carte_ = [list(row) for row in world.get_carte()]
 
     msg_h = len(msg)
@@ -369,7 +378,7 @@ def print_msg(msg, position='player'):
     if position == 'player':
         kx, ky = kirk.pos
     elif position == 'center':
-        kx, ky = int(w/2-msg_w/2), int(h/2+msg_h/2)
+        kx, ky = int(COL/2-msg_w/2), int(ROW/2+msg_h/2)
 
     for i, j in list(product(range(msg_w),range(msg_h))):
         carte_[j+ky-msg_dy][i+kx-msg_dx] = msg[j][i]
@@ -381,9 +390,9 @@ def print_msg(msg, position='player'):
     input('')
 
 
-def wrap_carte(carte):
+def wrap_carte(CARTE):
     """
-    wrap {carte} inbricate list format into a function for easier items access
+    wrap {CARTE} inbricate list format into a function for easier items access
 
         args:
             carte (list): a list of lists (rows) of character that represent the map
@@ -394,45 +403,27 @@ def wrap_carte(carte):
 
     def carte_item(pos):
         x, y = pos
-        return carte[y][x]
+        return CARTE[y][x]
     return carte_item
 
 
-#################################################################################
+###############################################################################
 
 
-from world_map import Carte, Kirk, carte, find_msg, cant_msg, get_msg, end_msg
-
-#r, c, a = 10, 30, 200
-
-kirk = Kirk(carte)
-world = Carte(carte, kirk)
+kirk = Kirk(CARTE)
+world = Carte(CARTE, kirk)
 start_pos = kirk.pos
-carte_item = wrap_carte(carte)
 
-global ROW
-global COL
-ROW = len(carte)
-COL = len(carte[0])
-
-# game loop
-    # kr: row where Kirk is located.
-    # kc: column where Kirk is located.
-
-#r, c, a = [int(i) for i in input().split()]
 if __name__ == '__main__':
     is_fini = False
     while True:
 
-        kr, kc = kirk.pos #[int(i) for i in input().split()]
-        #kr, kc = [int(i) for i in input().split()]
+        kr, kc = kirk.pos
 
         carte=[]
         for row in world.get_carte():
             carte += [row]
-        #for i in range(r):
-        #    row = input()  # C of the characters in '#.TC?' (i.e. one line of the ASCII maze).
-        #    carte += [row]
+
         carte_item = wrap_carte(carte)
 
         start = (kr, kc)
@@ -442,7 +433,7 @@ if __name__ == '__main__':
         move(start, path)
 
         for j, i  in list(product(range(kc-2, kc+3), range(kr-2, kr+3))): # 5*5 grid around kirk
-            if 0 < i < len(carte[0]) and 0 < j < len(carte): # and point not out game window
+            if 0 < i < COL and 0 < j < ROW: # and point not out game window
                 if carte[j][i] == 'C': # in side of view
 
                     print_msg(find_msg)
@@ -469,5 +460,3 @@ if __name__ == '__main__':
             break
 
 
-
-    #print("Debug messages...", file=sys.stderr)
