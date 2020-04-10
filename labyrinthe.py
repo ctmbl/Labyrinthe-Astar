@@ -42,6 +42,7 @@ def print_map(current_node=(0, 0), close_dict={(0, 0):0}, open_dict={(0, 0):0}):
             current_node (tuple) : currently analysed node
             close_dict (dict) : already analysed nodes
             open_dict (dict) : nodes to ne analysed
+
         returns:
             None
     """
@@ -63,6 +64,7 @@ def print_map(current_node=(0, 0), close_dict={(0, 0):0}, open_dict={(0, 0):0}):
 def move(start, path):
     """
     Make character (T) to move and follow the path
+
         args:
             start (tuple) : (x, y) first position
             path (list) : list of adjacents squares position
@@ -91,10 +93,12 @@ def pathfinding_brut(start, carte_item, char_researched='?'):
     """
     Brute force version of A* pathfinding algorythm
     Search from a starting postion in the map for a given character
+
         args:
             start (tuple) : (x, y) starting position
             carte_item (function) : return map character at a given position
             char_researched (str) : infinite loop until it's found
+
         return
             path (list) : list of adjacent position == shortest path to char_researched
     """
@@ -149,8 +153,10 @@ def pathfinding_brut(start, carte_item, char_researched='?'):
 def get_neighboors(node): #, carte_item):
     """
     A neighboor generator
+
         args:
             node (tuple) : (x, y) its position
+
         returns:
             a generator : iterate over top, down, left and right neighboors
     """
@@ -176,6 +182,7 @@ def update_open_dict(parent_node, node, open_dict, close_dict):
             node (tuple) : position of the node to be added in the open_dict
             open_dict (dict) : nodes to be analysed
             close_dict (dict) : nodes already analysed
+
         returns:
             open_dict (dict): updated version of itself (also changed by side effect, but...)
 
@@ -217,11 +224,13 @@ def pathfinding_astar(start, end, carte_item):
 
     7) when done, take the {close_dict} and starting from the end, iterate over parents until come back to start
 
-    pathfinding_astar(start, end, carte_item) => path
+    Usage : pathfinding_astar(start, end, carte_item) => path
+
         args:
             start (tuple) : (x, y) starting position
             end (tuple) : (x, y) ending position
             carte_item (function) : return map character at a given position
+
         return
             path (list) : list of adjacent position == shortest path between start and end nodes
     """
@@ -273,10 +282,12 @@ def get_path(start_node, dest_node, close_dict):
     """
     Take all analysed node in {close_dict} and by starting from
     {dest}ination node,loop over parent until {start_node} node is reached
+
         args:
             start_node (tuple) : (x,y) position of starting position
             dest_node (tuple) : (x,y) position of the destination node
             close_dict (dict) : analysed nodes, keys = node position, values = cosst and parent
+
         returns:
             path (list) : adjacent point froming the shortest path between start and dest_node
     """
@@ -294,25 +305,38 @@ def get_next_node(open_dict, dest):
     """
     Get the next best node to analyse by computing an heuristic function
     (balance between displacement cost from start to distance from the destination)
+
         args:
             open_dict (dict) : unanalysed nodes, keys = node position, values = cost and parent
             dest (tuple) : (x, y) currently analysed node position
+
         return:
             best_node (tuple) : (x, y) position of the next node to analyse
     """
 
-    best_node = None
-    best_heuristic = 99999
+    best_node, best_heuristic = None, 99999
 
     for node, cost in [(k, v['cost']) for k, v in open_dict.items()]:
-        #dist = abs(node[0] - dest[0]) + abs(node[1] - dest[1])*1.1
-        distance = (((node[0] - dest[0])**2 + (node[1] - dest[1])**2)**0.5)*1.25 # false but better looking path
+        distance = get_distance(dest, node)
         heuristic = cost + distance
+
         if heuristic < best_heuristic:
             best_node, best_heuristic = node, heuristic
 
     return best_node
 
+def get_distance(A, B):
+    #dist = abs(node[0] - dest[0]) + abs(node[1] - dest[1])*1.1
+    #distance = (((node[0] - dest[0])**2 + (node[1] - dest[1])**2)**0.5)*1.25 # false but better looking path
+    distance = (
+    (
+        (
+            (B[0] - A[0])**2
+          + (B[1] - A[1])**2
+        )**0.5
+    ) * 1.25
+    )
+    return distance
 
 from world_map import Carte, Kirk, carte
 
@@ -333,65 +357,66 @@ COL = len(carte[0])
     # kc: column where Kirk is located.
 
 #r, c, a = [int(i) for i in input().split()]
-is_fini = False
-while True:
+if __name__ == '__main__':
+    is_fini = False
+    while True:
 
-    kr, kc = kirk.pos #[int(i) for i in input().split()]
-    #kr, kc = [int(i) for i in input().split()]
+        kr, kc = kirk.pos #[int(i) for i in input().split()]
+        #kr, kc = [int(i) for i in input().split()]
 
-    carte=[]
-    for row in world.get_carte():
-        carte += [row]
-    #for i in range(r):
-    #    row = input()  # C of the characters in '#.TC?' (i.e. one line of the ASCII maze).
-    #    carte += [row]
-    carte_item = wrap_carte(carte)
+        carte=[]
+        for row in world.get_carte():
+            carte += [row]
+        #for i in range(r):
+        #    row = input()  # C of the characters in '#.TC?' (i.e. one line of the ASCII maze).
+        #    carte += [row]
+        carte_item = wrap_carte(carte)
 
-    start = (kr, kc)
+        start = (kr, kc)
 
-    path = pathfinding_brut(start, carte_item, '?')
+        path = pathfinding_brut(start, carte_item, '?')
 
-    for j in range(kc-2, kc+3):
-        for i in range(kr-2, kr+3):
-            if 0 < i < len(carte[0]) and 0 < j < len(carte):
-                if carte[j][i] == 'C':
-                    print('Nous avons trouvé la console!')
-                    input('')
-                    temp_path = pathfinding_astar((i,j), start,  carte_item)
-                    if temp_path != None:
-                        print('Nous pouvons l\'atteindre!')
+        for j in range(kc-2, kc+3):
+            for i in range(kr-2, kr+3):
+                if 0 < i < len(carte[0]) and 0 < j < len(carte):
+                    if carte[j][i] == 'C':
+                        print('Nous avons trouvé la console!')
                         input('')
-                        path = temp_path
-                        move(start, path)
-                        print('objectif ateint, nous rentrons au point de rendez-vous')
-                        path = pathfinding_astar((i,j), start_pos,  carte_item)
-                        for i,j in path:
-                            world.carte[j][i] = ' '
-                        for row in world.carte:
-                            print(''.join(row))
+                        temp_path = pathfinding_astar((i,j), start,  carte_item)
+                        if temp_path != None:
+                            print('Nous pouvons l\'atteindre!')
+                            input('')
+                            path = temp_path
+                            move(start, path)
+                            print('objectif ateint, nous rentrons au point de rendez-vous')
+                            path = pathfinding_astar((i,j), start_pos,  carte_item)
+                            for i,j in path:
+                                world.carte[j][i] = ' '
+                            for row in world.carte:
+                                print(''.join(row))
 
-                        move(start, path[::-1])
-                        print('===================================')
-                        print('===================================')
-                        print('=====*****===*===*===**============')
-                        print('=====*=======**==*===*==*==========')
-                        print('=====***=====*=*=*===*===*=========')
-                        print('=====*=======*==**===*==*==========')
-                        print('=====*****===*===*===***===========')
-                        print('===================================')
-                        print('===================================')
+                            move(start, path[::-1])
+                            print('===================================')
+                            print('===================================')
+                            print('=====*****===*===*===**============')
+                            print('=====*=======**==*===*==*==========')
+                            print('=====***=====*=*=*===*===*=========')
+                            print('=====*=======*==**===*==*==========')
+                            print('=====*****===*===*===***===========')
+                            print('===================================')
+                            print('===================================')
 
-                        is_fini = True
-                        break
-                    print('mais nous ne pouvons l\'atteindre:=!')
-                    input('')
+                            is_fini = True
+                            break
+                        print('mais nous ne pouvons l\'atteindre:=!')
+                        input('')
+            if is_fini:
+                break
         if is_fini:
             break
-    if is_fini:
-        break
 
-    path = path[-1:1:-1]#path[-1:-4:-1]
-    move(start, path)
+        path = path[-1:1:-1]#path[-1:-4:-1]
+        move(start, path)
 
 
-#print("Debug messages...", file=sys.stderr)
+    #print("Debug messages...", file=sys.stderr)
