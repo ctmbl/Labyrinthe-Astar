@@ -15,195 +15,6 @@ SHOW_BRUT = False
 SHOW_MOVE = True
 SHOW_FRAMERATE = 30
 
-def wrap_carte(carte):
-    """
-    wrap {carte} inbricate list format into a function for easier items access
-        args:
-            carte (list): a list of lists (rows) of character that represent the map
-        returns:
-            carte_item (function): f((row, col)) => character (str)
-    """
-
-    def carte_item(pos):
-        x, y = pos
-        return carte[y][x]
-    return carte_item
-
-def print_map(current_node=(0, 0), close_dict={(0, 0):0}, open_dict={(0, 0):0}):
-    """
-    Display what algorythms do by representing for each node its state during analysis
-        - '*' = analysed
-        - '0' = currently analysed
-        - 'o' = to be analysed
-        - 'T' = "player" actual position
-    !!! This function use world instance of World class to keep tracks of the map over iterations !!!
-
-        args:
-            current_node (tuple) : currently analysed node
-            close_dict (dict) : already analysed nodes
-            open_dict (dict) : nodes to ne analysed
-
-        returns:
-            None
-    """
-
-    for i, j in close_dict.keys():
-        world.carte[j][i] = '*'
-
-    for i, j in open_dict.keys():
-        world.carte[j][i] = 'o'
-
-    world.carte[current_node[1]][current_node[0]] = '0'
-    world.carte[world.kirk.pos[1]][world.kirk.pos[0]] == 'T'
-
-    for row in world.get_carte():
-        print(row)
-
-    time.sleep(1/SHOW_FRAMERATE)
-
-def move(start, path):
-    """
-    Make character (T) to move and follow the path
-
-        args:
-            start (tuple) : (x, y) first position
-            path (list) : list of adjacents squares position
-    """
-    prev_node = start # previous
-    for next_node in path:
-
-        if SHOW_MOVE:
-            print_map()
-
-        mouvement = (next_node[0]-prev_node[0],
-                     next_node[1]-prev_node[1])
-
-        if mouvement == DIRECTION['DOWN']:
-            world.move_kirk('DOWN')
-        elif mouvement == DIRECTION['UP']:
-            world.move_kirk('UP')
-        elif mouvement == DIRECTION['RIGHT']:
-            world.move_kirk('RIGHT')
-        elif mouvement == DIRECTION['LEFT']:
-            world.move_kirk('LEFT')
-
-        prev_node = next_node
-
-def pathfinding_brut(start, carte_item, char_researched='?'):
-    """
-    Brute force version of A* pathfinding algorythm
-    Search from a starting postion in the map for a given character
-
-        args:
-            start (tuple) : (x, y) starting position
-            carte_item (function) : return map character at a given position
-            char_researched (str) : infinite loop until it's found
-
-        return
-            path (list) : list of adjacent position == shortest path to char_researched
-    """
-
-    close_dict = {} # store analysed nodes with postition (tuple) as key
-    open_dict = {} # store unanalysed nodes with postition (tuple) as key
-    current_node = start # position of node being analysed
-
-    # init loop
-    open_dict[current_node] = {'cost' : 0, # displacement cost == number of space to get from start to the square
-                               'parent' : current_node} # position of the costless neighboor
-
-    is_dest_reached = False # true if the char_researched in found
-    while not is_dest_reached:
-
-        # enable display of what algorythm do
-        if SHOW_BRUT:
-            print_map(current_node, close_dict, open_dict)
-
-        # look up for possible neigboors and store them
-        for neighboor_node in get_neighboors(current_node):
-            if not carte_item(neighboor_node) in ['#']:
-                open_dict = update_open_dict(current_node, neighboor_node, open_dict, close_dict)
-
-            # stop algorythm
-            if carte_item(neighboor_node) == char_researched:
-                close_dict[neighboor_node] = open_dict[neighboor_node]
-                dest_node = neighboor_node
-                is_dest_reached = True
-                break
-
-        # nerver look again to the analysed node
-        close_dict[current_node] = open_dict.pop(current_node)
-
-        if not open_dict:
-            print('There is nothing to do anymore! Bye!')
-            return None
-
-        # get the closest (costless) unanalysed node from start position
-        current_node = False
-        for node, cost in [(k, v['cost']) for k, v in open_dict.items()]:
-            for i in range(1000):
-                if cost == i:
-                    current_node = node
-                    break
-            if current_node:
-                break
-
-    path = get_path(start, dest_node, close_dict)
-    return path
-
-def get_neighboors(node): #, carte_item):
-    """
-    A neighboor generator
-
-        args:
-            node (tuple) : (x, y) its position
-
-        returns:
-            a generator : iterate over top, down, left and right neighboors
-    """
-
-    x, y = node
-
-    if 0 < y < ROW-1:
-        yield (x, y+1)
-        yield (x, y-1)
-
-    if 0 < x < COL-1:
-        yield (x+1, y)
-        yield (x-1, y)
-
-
-def update_open_dict(parent_node, node, open_dict, close_dict):
-    """
-    Check if a {node} should be added to the {open_dict} or
-    update its parent if the new parent path from start is shorter than the older
-
-        args:
-            parent_node (tuple) : position of the node being analysed
-            node (tuple) : position of the node to be added in the open_dict
-            open_dict (dict) : nodes to be analysed
-            close_dict (dict) : nodes already analysed
-
-        returns:
-            open_dict (dict): updated version of itself (also changed by side effect, but...)
-
-    """
-
-    new_cost = cost = open_dict[parent_node]['cost'] + 1 # one step further
-
-    # if already analysed
-    if node in close_dict.keys():
-        return open_dict
-
-    # if not analysed
-    if node in open_dict.keys():
-        old_cost = open_dict[node]['cost']
-        if old_cost > new_cost:
-            open_dict[node] = {'cost' : cost, 'parent' : parent_node} # => give it a better parent
-        return open_dict
-
-    # else if unknown node
-    open_dict[node] = {'cost' : cost, 'parent' : parent_node}
-    return open_dict
 
 
 def pathfinding_astar(start, end, carte_item):
@@ -278,6 +89,102 @@ def pathfinding_astar(start, end, carte_item):
     path = get_path(start, end, close_dict)
     return path
 
+
+def get_neighboors(node):
+    """
+    A neighboor generator
+
+        args:
+            node (tuple) : (x, y) its position
+
+        returns:
+            a generator : iterate over top, down, left and right neighboors
+    """
+
+    x, y = node
+
+    if 0 < y < ROW-1:
+        yield (x, y+1)
+        yield (x, y-1)
+
+    if 0 < x < COL-1:
+        yield (x+1, y)
+        yield (x-1, y)
+
+
+def update_open_dict(parent_node, node, open_dict, close_dict):
+    """
+    Check if a {node} should be added to the {open_dict} or
+    update its parent if the new parent path from start is shorter than the older
+
+        args:
+            parent_node (tuple) : position of the node being analysed
+            node (tuple) : position of the node to be added in the open_dict
+            open_dict (dict) : nodes to be analysed
+            close_dict (dict) : nodes already analysed
+
+        returns:
+            open_dict (dict): updated version of itself (also changed by side effect, but...)
+
+    """
+
+    new_cost = cost = open_dict[parent_node]['cost'] + 1 # one step further
+
+    # if already analysed
+    if node in close_dict.keys():
+        return open_dict
+
+    # if not analysed
+    if node in open_dict.keys():
+        old_cost = open_dict[node]['cost']
+        if old_cost > new_cost:
+            open_dict[node] = {'cost' : cost, 'parent' : parent_node} # => give it a better parent
+        return open_dict
+
+    # else if unknown node
+    open_dict[node] = {'cost' : cost, 'parent' : parent_node}
+    return open_dict
+
+
+def get_next_node(open_dict, dest):
+    """
+    Get the next best node to analyse by computing an heuristic function
+    (balance between displacement cost from start and distance from the destination)
+
+        args:
+            open_dict (dict) : unanalysed nodes, keys = node position, values = cost and parent
+            dest (tuple) : (x, y) currently analysed node position
+
+        return:
+            best_node (tuple) : (x, y) position of the next node to analyse
+    """
+
+    best_node, best_heuristic = None, 99999
+
+    for node, cost in [(k, v['cost']) for k, v in open_dict.items()]:
+        distance = get_distance(dest, node)
+        heuristic = cost + distance
+
+        if heuristic < best_heuristic:
+            best_node, best_heuristic = node, heuristic
+
+    return best_node
+
+
+def get_distance(A, B):
+    #dist = abs(node[0] - dest[0]) + abs(node[1] - dest[1])*1.1
+    #distance = (((node[0] - dest[0])**2 + (node[1] - dest[1])**2)**0.5)*1.25 # false but better looking path
+    distance = (
+    (
+        (
+            (B[0] - A[0])**2
+          + (B[1] - A[1])**2
+        )**0.5
+    ) * 1.25
+    )
+    return distance
+
+
 def get_path(start_node, dest_node, close_dict):
     """
     Take all analysed node in {close_dict} and by starting from
@@ -301,42 +208,147 @@ def get_path(start_node, dest_node, close_dict):
             break
     return path
 
-def get_next_node(open_dict, dest):
+
+def move(start, path):
     """
-    Get the next best node to analyse by computing an heuristic function
-    (balance between displacement cost from start to distance from the destination)
+    Make character (T) to move and follow the path
 
         args:
-            open_dict (dict) : unanalysed nodes, keys = node position, values = cost and parent
-            dest (tuple) : (x, y) currently analysed node position
+            start (tuple) : (x, y) first position
+            path (list) : list of adjacents squares position
+    """
+    prev_node = start # previous
+    for next_node in path:
 
-        return:
-            best_node (tuple) : (x, y) position of the next node to analyse
+        if SHOW_MOVE:
+            print_map()
+
+        mouvement = (next_node[0]-prev_node[0],
+                     next_node[1]-prev_node[1])
+
+        if mouvement == DIRECTION['DOWN']:
+            world.move_kirk('DOWN')
+        elif mouvement == DIRECTION['UP']:
+            world.move_kirk('UP')
+        elif mouvement == DIRECTION['RIGHT']:
+            world.move_kirk('RIGHT')
+        elif mouvement == DIRECTION['LEFT']:
+            world.move_kirk('LEFT')
+
+        prev_node = next_node
+
+
+def pathfinding_brut(start, carte_item, char_researched='?'):
+    """
+    Brute force version of A* pathfinding algorythm
+    Search from a starting postion in the map for a given character
+
+        args:
+            start (tuple) : (x, y) starting position
+            carte_item (function) : return map character at a given position
+            char_researched (str) : infinite loop until it's found
+
+        return
+            path (list) : list of adjacent position == shortest path to char_researched
     """
 
-    best_node, best_heuristic = None, 99999
+    close_dict = {} # store analysed nodes with postition (tuple) as key
+    open_dict = {} # store unanalysed nodes with postition (tuple) as key
+    current_node = start # position of node being analysed
 
-    for node, cost in [(k, v['cost']) for k, v in open_dict.items()]:
-        distance = get_distance(dest, node)
-        heuristic = cost + distance
+    # init loop
+    open_dict[current_node] = {'cost' : 0, # displacement cost == number of space to get from start to the square
+                               'parent' : current_node} # position of the costless neighboor
 
-        if heuristic < best_heuristic:
-            best_node, best_heuristic = node, heuristic
+    is_dest_reached = False # true if the char_researched in found
+    while not is_dest_reached:
 
-    return best_node
+        # enable display of what algorythm do
+        if SHOW_BRUT:
+            print_map(current_node, close_dict, open_dict)
 
-def get_distance(A, B):
-    #dist = abs(node[0] - dest[0]) + abs(node[1] - dest[1])*1.1
-    #distance = (((node[0] - dest[0])**2 + (node[1] - dest[1])**2)**0.5)*1.25 # false but better looking path
-    distance = (
-    (
-        (
-            (B[0] - A[0])**2
-          + (B[1] - A[1])**2
-        )**0.5
-    ) * 1.25
-    )
-    return distance
+        # look up for possible neigboors and store them
+        for neighboor_node in get_neighboors(current_node):
+            if not carte_item(neighboor_node) in ['#']:
+                open_dict = update_open_dict(current_node, neighboor_node, open_dict, close_dict)
+
+            # stop algorythm
+            if carte_item(neighboor_node) == char_researched:
+                close_dict[neighboor_node] = open_dict[neighboor_node]
+                dest_node = neighboor_node
+                is_dest_reached = True
+                break
+
+        # nerver look again to the analysed node
+        close_dict[current_node] = open_dict.pop(current_node)
+
+        if not open_dict:
+            print('There is nothing to do anymore! Bye!')
+            return None
+
+        # get the closest (costless) unanalysed node from start position
+        current_node = False
+        for node, cost in [(k, v['cost']) for k, v in open_dict.items()]:
+            for i in range(1000):
+                if cost == i:
+                    current_node = node
+                    break
+            if current_node:
+                break
+
+    path = get_path(start, dest_node, close_dict)
+    return path
+
+
+def print_map(current_node=(0, 0), close_dict={(0, 0):0}, open_dict={(0, 0):0}):
+    """
+    Display what algorythms do by representing for each node its state during analysis
+        - '*' = analysed
+        - '0' = currently analysed
+        - 'o' = to be analysed
+        - 'T' = "player" actual position
+    !!! This function use world instance of World class to keep tracks of the map over iterations !!!
+
+        args:
+            current_node (tuple) : currently analysed node
+            close_dict (dict) : already analysed nodes
+            open_dict (dict) : nodes to ne analysed
+    """
+
+    for i, j in close_dict.keys():
+        world.carte[j][i] = '*'
+
+    for i, j in open_dict.keys():
+        world.carte[j][i] = 'o'
+
+    world.carte[current_node[1]][current_node[0]] = '0'
+    world.carte[world.kirk.pos[1]][world.kirk.pos[0]] == 'T'
+
+    for row in world.get_carte():
+        print(row)
+
+    time.sleep(1/SHOW_FRAMERATE)
+
+
+def wrap_carte(carte):
+    """
+    wrap {carte} inbricate list format into a function for easier items access
+
+        args:
+            carte (list): a list of lists (rows) of character that represent the map
+
+        returns:
+            carte_item (function): f((row, col)) => character (str)
+    """
+
+    def carte_item(pos):
+        x, y = pos
+        return carte[y][x]
+    return carte_item
+
+
+#################################################################################
+
 
 from world_map import Carte, Kirk, carte
 
