@@ -1,9 +1,9 @@
 # Labyrinthe-Astar
 
-Implementation of A* pathfinding algorythm (own interpretation)
+Implementation of A* pathfinding algorithm (own interpretation)
 
 It's in fact resolution of a small exercise (described below)
-It permit actually to display what algorythm do in real time
+It permit actually to display what algorithm do in real time
 
 
 
