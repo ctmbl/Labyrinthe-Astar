@@ -99,3 +99,9 @@ run
 ```bash
 python3 labyrinthe.py
 ```
+
+for more details on internals functions
+```python3
+>>> import labyrinthe
+>>> help(labyrinthe)
+```
