@@ -37,7 +37,7 @@ DIRECTION = {'DOWN' : (0, 1),
              'RIGHT' : (1, 0),
              'LEFT' : (-1, 0)}
 
-def pathfinding_astar(start, end, carte_item):
+def pathfinding_astar(start, end, carte):
     """
     A* pathfinding algorythm
     ========================
@@ -65,6 +65,9 @@ def pathfinding_astar(start, end, carte_item):
         return
             path (list) : list of adjacent position == shortest path between start and end nodes
     """
+    carte_item = wrap_carte(carte)
+    dim = (len(carte), len(carte[0]))
+    SHOW_ASTAR = False
 
     close_dict = {}
     open_dict = {}
@@ -81,7 +84,7 @@ def pathfinding_astar(start, end, carte_item):
         if SHOW_ASTAR:
             print_map(current_node, close_dict, open_dict)
 
-        for neighboor_node in get_neighboors(current_node):
+        for neighboor_node in get_neighboors(current_node, dim):
             if carte_item(neighboor_node) in ['?', '#']:
                 continue
 
@@ -110,7 +113,7 @@ def pathfinding_astar(start, end, carte_item):
     return path
 
 
-def get_neighboors(node):
+def get_neighboors(node, dim):
     """
     A neighboor generator
 
@@ -122,6 +125,7 @@ def get_neighboors(node):
     """
 
     x, y = node
+    ROW, COL = dim
 
     if 0 < y < ROW-1:
         yield (x, y+1)

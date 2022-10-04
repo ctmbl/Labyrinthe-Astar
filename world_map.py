@@ -12,7 +12,7 @@ class Carte:
     def __init__(self, carte, kirk):
         self.carte = [list(ligne) for ligne in carte]
         self.size = len(self.carte[0]), len(self.carte)
-        print('len : ',len(carte))
+        #print('len : ',len(carte))
         self.revealed = [['?' for c in ligne] for ligne in carte]
         self.kirk = kirk
 
